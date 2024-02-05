@@ -37,16 +37,23 @@ public final class Constants {
 
     // These are fake gains; in actuality these must be determined individually for each robot
     // Constants tunable through preferences
-    public static final PreferenceKeyValue MOTOR_KP =
-        new PreferenceKeyValue("MotorKP", 6.0d / 1000);
+    public static final PreferenceKeyValue MOTOR_KP_VOLTS_PER_RPM =
+        new PreferenceKeyValue("MotorKP", 6.0d / 5000);
     public static final PreferenceKeyValue MOTOR_KS_VOLTS = new PreferenceKeyValue("MotorKS", 0.0);
     public static final PreferenceKeyValue MOTOR_KV_VOLTS_PER_RPM =
-        new PreferenceKeyValue("MotorKV", 6.0d / 1000);
+        new PreferenceKeyValue("MotorKV", 6.0d / 5000);
     public static final PreferenceKeyValue MOTOR_KA_VOLTS_PER_RPM2 =
         new PreferenceKeyValue("MotorKA", 0.0d / 1000);
 
+    public static final PreferenceKeyValue MOTOR_SET_POINT_RPM =
+        new PreferenceKeyValue("MotorRPM", 2000);
+
     private static final PreferenceKeyValue[] MOTOR_PREFERENCES = {
-      MOTOR_KP, MOTOR_KS_VOLTS, MOTOR_KV_VOLTS_PER_RPM, MOTOR_KA_VOLTS_PER_RPM2
+      MOTOR_SET_POINT_RPM,
+      MOTOR_KP_VOLTS_PER_RPM,
+      MOTOR_KS_VOLTS,
+      MOTOR_KV_VOLTS_PER_RPM,
+      MOTOR_KA_VOLTS_PER_RPM2
     };
 
     public static PreferenceKeyValue[] getMotorPreferences() {
@@ -54,10 +61,9 @@ public final class Constants {
     }
 
     public static final double MOTOR_GEAR_RATIO =
-        3.0; // Ratio of motor rotations to output rotations
-    public static final double MOTOR_ROTATIONS_PER_ENCODER_ROTATION = 1.0d / MOTOR_GEAR_RATIO;
-    public static final double MOTOR_TOLERANCE_RPM = 20;
-    public static final double MOTOR_FULL_SPEED = 600;
+        1.0; // Ratio of motor rotations to output rotations
+    public static final double MOTOR_ROTATIONS_PER_ENCODER_ROTATION = 1.0 / MOTOR_GEAR_RATIO;
+    public static final double MOTOR_TOLERANCE_RPM = 100;
   }
 
   /** Constants used for assigning operator input. */

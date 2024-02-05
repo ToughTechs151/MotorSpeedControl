@@ -48,19 +48,9 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     // Run the launcher at the defined speed while the right trigger is held.
-    operatorController
-        .rightTrigger()
-        .whileTrue(
-            motor
-                .runMotor(Constants.MotorConstants.MOTOR_FULL_SPEED)
-                .withName("Launcher: Run Forward"));
+    operatorController.rightTrigger().whileTrue(motor.runForward().withName("Motor: Run Forward"));
 
-    operatorController
-        .leftTrigger()
-        .whileTrue(
-            motor
-                .runMotor(-Constants.MotorConstants.MOTOR_FULL_SPEED)
-                .withName("Launcher: Run Reverse"));
+    operatorController.leftTrigger().whileTrue(motor.runReverse().withName("Motor: Run Reverse"));
   }
 
   /**

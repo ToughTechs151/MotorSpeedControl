@@ -18,7 +18,7 @@ public final class Constants {
       throw new IllegalStateException("IntakeLauncherSimConstants Utility Class");
     }
 
-    public static final double MOTOR_MOI_IN_LBS2 = 4.5;
+    public static final double MOTOR_MOI_IN_LBS2 = 2.0;
     public static final double MOTOR_MOI_KG_METERS2 = MOTOR_MOI_IN_LBS2 * POUND_IN2_TO_KG_METERS2;
   }
 }

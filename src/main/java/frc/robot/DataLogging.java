@@ -18,8 +18,8 @@ import edu.wpi.first.wpilibj.shuffleboard.EventImportance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.subsystems.MotorSubsystem;
 import java.util.Map;
 
@@ -32,8 +32,6 @@ public class DataLogging {
   private ShuffleboardLayout pdpWidget;
   private boolean everBrownout = false;
   private boolean prevDsConnectState;
-  private ShuffleboardTab sbDriverTab;
-  private Field2d sbField;
 
   private DataLogging() {
     // Starts recording to data log
@@ -56,7 +54,7 @@ public class DataLogging {
     }
 
     ShuffleboardTab sbRobotTab = Shuffleboard.getTab("Robot");
-    pdpWidget = sbRobotTab.getLayout("PDP", BuiltInLayouts.kGrid).withSize(3, 3);
+    pdpWidget = sbRobotTab.getLayout("PDP", BuiltInLayouts.kGrid).withSize(3, 6);
     ShuffleboardLayout rcWidget =
         sbRobotTab.getLayout("RobotController", BuiltInLayouts.kGrid).withSize(3, 3);
 
@@ -77,9 +75,6 @@ public class DataLogging {
         .withProperties(Map.of("Color when true", "Red", "Color when false", "Green"));
 
     prevDsConnectState = DriverStation.isDSAttached();
-
-    /* Drivers tab */
-    sbDriverTab = Shuffleboard.getTab("Driver");
 
     DataLogManager.log(String.format("Brownout Voltage: %f", RobotController.getBrownoutVoltage()));
 
@@ -155,13 +150,21 @@ public class DataLogging {
   public void dataLogRobotContainerInit(RobotContainer robotContainer) {
 
     PowerDistribution pdp = robotContainer.getPdp();
-    MotorSubsystem launcher = robotContainer.getMotorSubsystem();
+    MotorSubsystem motor = robotContainer.getMotorSubsystem();
 
     // Add widgets to the Commands tab
     sbCommandsTab.add(CommandScheduler.getInstance()).withSize(3, 2);
-    sbCommandsTab.add(launcher).withSize(3, 1);
+    sbCommandsTab.add(motor).withSize(3, 1);
 
-    // Add widgets to the Driver tab
+    // Add buttons to reset preferences to the default constant values
+    sbCommandsTab
+        .add(
+            new InstantCommand(
+                    () ->
+                        RobotPreferences.resetPreferencesArray(
+                            Constants.MotorConstants.getMotorPreferences()))
+                .withName("Reset Motor Preferences"))
+        .withSize(2, 1);
 
     // Add hardware sendables here
     pdpWidget.add("PDP", pdp);
@@ -174,9 +177,6 @@ public class DataLogging {
         .addNumber("PDP Temp", pdp::getTemperature)
         .withWidget(BuiltInWidgets.kDial)
         .withProperties(Map.of("min", 15, "max", 50));
-    pdpWidget.addNumber("PDP Current", pdp::getTotalCurrent);
-    pdpWidget.addNumber("PDP Energy", pdp::getTotalEnergy);
-    pdpWidget.addNumber("PDP Power", pdp::getTotalPower);
   }
 
   /**

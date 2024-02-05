@@ -37,7 +37,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   private final RelativeEncoder encoder;
 
   private PIDController motorController =
-      new PIDController(MotorConstants.MOTOR_KP.getValue(), 0.0, 0.0);
+      new PIDController(MotorConstants.MOTOR_KP_VOLTS_PER_RPM.getValue(), 0.0, 0.0);
 
   SimpleMotorFeedforward feedforward =
       new SimpleMotorFeedforward(
@@ -49,6 +49,8 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   private double newFeedforward = 0;
   private boolean motorEnabled;
   private double motorVoltageCommand = 0.0;
+
+  private double setpoint = 600;
 
   /** Create a new motorSubsystem controlled by a Profiled PID COntroller . */
   public MotorSubsystem(Hardware motorHardware) {
@@ -132,10 +134,20 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     motor.setVoltage(motorVoltageCommand);
   }
 
-  /** Returns a Command that runs the motor at the defined speed. */
-  public Command runMotor(double setpoint) {
+  /** Returns a Command that runs the motor forward at the current set speed. */
+  public Command runForward() {
     return new FunctionalCommand(
-        () -> setMotorSetPoint(setpoint),
+        () -> setMotorSetPoint(1.0),
+        this::updateMotorController,
+        interrupted -> disableMotor(),
+        () -> false,
+        this);
+  }
+
+  /** Returns a Command that runs the motor in reverse at the current set speed. */
+  public Command runReverse() {
+    return new FunctionalCommand(
+        () -> setMotorSetPoint(-1.0),
         this::updateMotorController,
         interrupted -> disableMotor(),
         () -> false,
@@ -146,8 +158,9 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
    * Set the setpoint for the motor. The PIDController drives the motor to this speed and holds it
    * there.
    */
-  private void setMotorSetPoint(double setpoint) {
-    motorController.setSetpoint(setpoint);
+  private void setMotorSetPoint(double scale) {
+    loadPreferences();
+    motorController.setSetpoint(scale * setpoint);
 
     // Call enable() to configure and start the controller in case it is not already enabled.
     enableMotor();
@@ -221,8 +234,11 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
    */
   private void loadPreferences() {
 
+    // Read the motor speed set point
+    setpoint = MotorConstants.MOTOR_SET_POINT_RPM.getValue();
+
     // Read Preferences for PID controller
-    motorController.setP(MotorConstants.MOTOR_KP.getValue());
+    motorController.setP(MotorConstants.MOTOR_KP_VOLTS_PER_RPM.getValue());
 
     // Read Preferences for Feedforward and create a new instance
     double staticGain = MotorConstants.MOTOR_KS_VOLTS.getValue();
