@@ -9,14 +9,9 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
-import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.ArmSubsystem;
-import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.ExampleSubsystem;
+import frc.robot.subsystems.MotorSubsystem;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -29,39 +24,20 @@ public class RobotContainer {
 
   // First we do things that are in all Robots.
   private PowerDistribution pdp = new PowerDistribution();
+
   // The driver's controller
-  private CommandXboxController driverController =
-      new CommandXboxController(OIConstants.DRIVER_CONTROLLER_PORT);
+  private CommandXboxController operatorController =
+      new CommandXboxController(OIConstants.OPERATOR_CONTROLLER_PORT);
 
   // Now all the subsystems.
-  // The Example.
-  private final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
-  private final ExampleCommand autoCommand =
-      new ExampleCommand("ExampleCommand", this.exampleSubsystem);
-  // The Arm.
-  private final ArmSubsystem robotArm = new ArmSubsystem(ArmSubsystem.initializeHardware());
-  // The drive.
-  private final DriveSubsystem robotDrive = new DriveSubsystem();
+  // The Intake and Launcher.
+  private final MotorSubsystem motor = new MotorSubsystem(MotorSubsystem.initializeHardware());
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
 
     // Configure the button bindings
     configureButtonBindings();
-
-    // Configure default commands
-    // Set the default drive command to split-stick tank drive
-    this.robotDrive.setDefaultCommand(
-        // A split-stick tank command, with left side forward/backward controlled by the left
-        // joystick, and right side controlled by the right joystick.
-        new RunCommand(
-                () ->
-                    this.robotDrive.tankDrive(
-                        -this.driverController.getLeftY(),
-                        -this.driverController.getRightY(),
-                        this.driverController.rightBumper().getAsBoolean()),
-                this.robotDrive)
-            .withName("Drive: Tank"));
   }
 
   /**
@@ -71,32 +47,20 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    // Move the arm to the low position when the 'A' button is pressed.
-    driverController
-        .a()
-        .onTrue(
-            robotArm
-                .moveToPosition(Constants.ArmConstants.ARM_LOW_POSITION)
-                .withName("Arm: Move to Low Position"));
+    // Run the launcher at the defined speed while the right trigger is held.
+    operatorController
+        .rightTrigger()
+        .whileTrue(
+            motor
+                .runMotor(Constants.MotorConstants.MOTOR_FULL_SPEED)
+                .withName("Launcher: Run Forward"));
 
-    // Move the arm to the high position when the 'B' button is pressed.
-    driverController
-        .b()
-        .onTrue(
-            robotArm
-                .moveToPosition(Constants.ArmConstants.ARM_HIGH_POSITION)
-                .withName("Arm: Move to High Position"));
-
-    // Shift position down a small amount when the POV Down is pressed.
-    driverController.povDown().onTrue(robotArm.shiftDown());
-
-    // Shift position up a small amount when the POV Down is pressed.
-    driverController.povUp().onTrue(robotArm.shiftUp());
-
-    // Disable the arm controller when the 'X' button is pressed.
-    // NOTE: This is intended for initial arm testing and should be removed in the final robot
-    // to prevent accidental disable resulting in lowering of the arm.
-    driverController.x().onTrue(Commands.runOnce(robotArm::disable));
+    operatorController
+        .leftTrigger()
+        .whileTrue(
+            motor
+                .runMotor(-Constants.MotorConstants.MOTOR_FULL_SPEED)
+                .withName("Launcher: Run Reverse"));
   }
 
   /**
@@ -105,8 +69,7 @@ public class RobotContainer {
    * simulation matches RoboRio behavior. Commands are canceled at the Robot level.
    */
   public void disableSubsystems() {
-    robotArm.disable();
-    robotDrive.disable();
+    motor.disableMotor();
     DataLogManager.log("disableSubsystems");
   }
 
@@ -117,7 +80,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An ExampleCommand will run in autonomous
-    return this.autoCommand;
+    return null;
   }
 
   /**
@@ -130,20 +93,11 @@ public class RobotContainer {
   }
 
   /**
-   * Use this to get the Arm Subsystem.
+   * Use this to get the Launcher Subsystem.
    *
-   * @return the command to run in autonomous
+   * @return a reference to the Launcher Subsystem
    */
-  public ArmSubsystem getArmSubsystem() {
-    return robotArm;
-  }
-
-  /**
-   * Use this to get the Drivetrain Subsystem.
-   *
-   * @return the Drivetrain Subsystem
-   */
-  public DriveSubsystem getDriveSubsystem() {
-    return robotDrive;
+  public MotorSubsystem getMotorSubsystem() {
+    return motor;
   }
 }

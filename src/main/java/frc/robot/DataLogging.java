@@ -2,9 +2,6 @@ package frc.robot;
 
 // Forked from FRC Team 2832 "The Livonia Warriors"
 
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableType;
 import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.util.datalog.StringLogEntry;
@@ -23,10 +20,8 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.ArmSubsystem;
-import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.MotorSubsystem;
 import java.util.Map;
-import java.util.Set;
 
 /** The DataLogging class contains all the logic for using telemetry. */
 public class DataLogging {
@@ -39,8 +34,6 @@ public class DataLogging {
   private boolean prevDsConnectState;
   private ShuffleboardTab sbDriverTab;
   private Field2d sbField;
-  private DriveSubsystem drive;
-  private ArmSubsystem arm;
 
   private DataLogging() {
     // Starts recording to data log
@@ -48,21 +41,8 @@ public class DataLogging {
     final DataLog log = DataLogManager.getLog();
 
     // Record the starting values of preferences
-    NetworkTable prefTable = NetworkTableInstance.getDefault().getTable("Preferences");
-    Set<String> prefKeys = prefTable.getKeys();
     DataLogManager.log("Starting Preference Values:");
-
-    for (String keyName : prefKeys) {
-      NetworkTableType prefType = prefTable.getEntry(keyName).getType();
-
-      if (prefType == NetworkTableType.kDouble) {
-        DataLogManager.log(
-            "Preferences/" + keyName + ": " + prefTable.getEntry(keyName).getDouble(-1));
-      } else if (prefType == NetworkTableType.kBoolean) {
-        DataLogManager.log(
-            "Preferences/" + keyName + ": " + prefTable.getEntry(keyName).getBoolean(false));
-      }
-    }
+    RobotPreferences.logPreferences();
 
     // Record both DS control and joystick data. To
     DriverStation.startDataLog(DataLogManager.getLog(), Constants.LOG_JOYSTICK_DATA);
@@ -100,8 +80,6 @@ public class DataLogging {
 
     /* Drivers tab */
     sbDriverTab = Shuffleboard.getTab("Driver");
-    sbField = new Field2d();
-    sbDriverTab.add("Field", sbField);
 
     DataLogManager.log(String.format("Brownout Voltage: %f", RobotController.getBrownoutVoltage()));
 
@@ -112,13 +90,17 @@ public class DataLogging {
     CommandScheduler.getInstance()
         .onCommandInitialize(
             command -> commandLog.append("Command initialized:" + command.getName()));
-    CommandScheduler.getInstance()
-        .onCommandExecute(command -> commandLog.append("Command execute:" + command.getName()));
+
+    if (Constants.COMMAND_EXECUTE_LOG) {
+      CommandScheduler.getInstance()
+          .onCommandExecute(command -> commandLog.append("Command execute:" + command.getName()));
+    }
+
     CommandScheduler.getInstance()
         .onCommandInterrupt(
-            command -> commandLog.append("Command interrupted" + command.getName()));
+            command -> commandLog.append("Command interrupted:" + command.getName()));
     CommandScheduler.getInstance()
-        .onCommandFinish(command -> commandLog.append("Command finished" + command.getName()));
+        .onCommandFinish(command -> commandLog.append("Command finished:" + command.getName()));
     commandLog.append("Opened command log");
 
     loopTime = new DoubleLogEntry(log, "/robot/LoopTime");
@@ -160,9 +142,6 @@ public class DataLogging {
       prevDsConnectState = newDsConnectState;
     }
 
-    // Get the pose from the drivetrain subsystem and update the field display
-    sbField.setRobotPose(drive.getPose());
-
     if (Constants.LOOP_TIMING_LOG) {
       loopTime.append(Timer.getFPGATimestamp() - startTime);
     }
@@ -175,17 +154,16 @@ public class DataLogging {
    */
   public void dataLogRobotContainerInit(RobotContainer robotContainer) {
 
-    PowerDistribution pdp;
-    pdp = robotContainer.getPdp();
-    drive = robotContainer.getDriveSubsystem();
-    arm = robotContainer.getArmSubsystem();
+    PowerDistribution pdp = robotContainer.getPdp();
+    MotorSubsystem launcher = robotContainer.getMotorSubsystem();
 
+    // Add widgets to the Commands tab
     sbCommandsTab.add(CommandScheduler.getInstance()).withSize(3, 2);
-    sbCommandsTab.add(arm).withSize(3, 1);
-    sbCommandsTab.add(drive).withSize(3, 1);
+    sbCommandsTab.add(launcher).withSize(3, 1);
+
+    // Add widgets to the Driver tab
 
     // Add hardware sendables here
-    // sbRobotTab.add("PDP", pdp).withWidget(BuiltInWidgets.kPowerDistribution)
     pdpWidget.add("PDP", pdp);
 
     // Log configuration info here

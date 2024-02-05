@@ -1,6 +1,6 @@
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2024.1.1"
+    id "edu.wpi.first.GradleRIO" version "2024.2.1"
     id 'com.diffplug.spotless' version '6.16.0'
     id "com.github.spotbugs" version "5.2.3"
     id "jacoco"
@@ -136,7 +136,7 @@ tasks.withType(JavaCompile) {
 
 sonarqube {
     properties {
-        property "sonar.projectKey", "ToughTechs151_robot-template"
+        property "sonar.projectKey", "ToughTechs151_MotorSpeedControl"
         property "sonar.organization", "toughtechs151"
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.java.spotbugs.reportPaths", "${buildDir}/reports/spotbugs/main.xml"
@@ -217,6 +217,10 @@ spotbugsTest {
             enabled = true
         }
     }
+}
+
+javadoc {
+    options.addStringOption('encoding', 'UTF-8')
 }
 
 // Run spotlessApply before compiling to fix style errors.
