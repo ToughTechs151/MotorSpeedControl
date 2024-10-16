@@ -15,7 +15,7 @@ public final class Constants {
   /** Motor simulation constants. */
   public static final class MotorSimConstants {
     private MotorSimConstants() {
-      throw new IllegalStateException("IntakeLauncherSimConstants Utility Class");
+      throw new IllegalStateException("MotorSimConstants Utility Class");
     }
 
     public static final double MOTOR_MOI_IN_LBS2 = 2.0;

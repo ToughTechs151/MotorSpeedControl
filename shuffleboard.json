@@ -10,138 +10,7 @@
         "hgap": 16.0,
         "vgap": 16.0,
         "titleType": 0,
-        "tiles": {
-          "7,0": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Arm Angle",
-              "_title": "/SmartDashboard/Arm Angle",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "7,1": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Launcher Speed",
-              "_title": "/SmartDashboard/Launcher Speed",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "7,2": {
-            "size": [
-              1,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Launcher Setpoint",
-              "_title": "/SmartDashboard/Launcher Setpoint",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,1": {
-            "size": [
-              2,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Intake Setpoint",
-              "_title": "/SmartDashboard/Intake Setpoint",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,2": {
-            "size": [
-              2,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Intake Speed",
-              "_title": "/SmartDashboard/Intake Speed",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,3": {
-            "size": [
-              2,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Intake Current",
-              "_title": "/SmartDashboard/Intake Current",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,4": {
-            "size": [
-              2,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Intake PID output",
-              "_title": "/SmartDashboard/Intake PID output",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,5": {
-            "size": [
-              2,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Intake Feedforward",
-              "_title": "/SmartDashboard/Intake Feedforward",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "9,0": {
-            "size": [
-              2,
-              1
-            ],
-            "content": {
-              "_type": "Text View",
-              "_source0": "network_table:///SmartDashboard/Intake Voltage",
-              "_title": "/SmartDashboard/Intake Voltage",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          },
-          "3,0": {
-            "size": [
-              3,
-              5
-            ],
-            "content": {
-              "_type": "Network Table Tree",
-              "_source0": "network_table:///Preferences",
-              "_title": "/Preferences",
-              "_glyph": 148,
-              "_showGlyph": false
-            }
-          }
-        }
+        "tiles": {}
       }
     },
     {
@@ -168,20 +37,6 @@
         "vgap": 16.0,
         "titleType": 0,
         "tiles": {
-          "1,0": {
-            "size": [
-              3,
-              3
-            ],
-            "content": {
-              "_type": "Robot Preferences",
-              "_source0": "network_table:///Preferences",
-              "_title": "Preferences",
-              "_glyph": 148,
-              "_showGlyph": false,
-              "Miscellaneous/Show search box": true
-            }
-          },
           "7,0": {
             "size": [
               3,
@@ -193,12 +48,13 @@
               "_title": "SmartDashboard/motor Current",
               "_glyph": 148,
               "_showGlyph": false,
-              "Graph/Visible time": 30.0,
+              "Graph/Visible time": 10.0,
               "Graph/X-axis auto scrolling": true,
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul"
+              "Y-axis/Unit": "ul",
+              "Visible data/SmartDashboard/motor Current": true
             }
           },
           "4,0": {
@@ -213,12 +69,14 @@
               "_title": "SmartDashboard/motor Velocity",
               "_glyph": 148,
               "_showGlyph": false,
-              "Graph/Visible time": 30.0,
+              "Graph/Visible time": 10.0,
               "Graph/X-axis auto scrolling": true,
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul"
+              "Y-axis/Unit": "ul",
+              "Visible data/SmartDashboard/motor Setpoint": true,
+              "Visible data/SmartDashboard/motor Velocity": true
             }
           },
           "4,3": {
@@ -234,12 +92,41 @@
               "_title": "SmartDashboard/motor PID output",
               "_glyph": 148,
               "_showGlyph": false,
-              "Graph/Visible time": 30.0,
+              "Graph/Visible time": 10.0,
               "Graph/X-axis auto scrolling": true,
               "Y-axis/Automatic bounds": true,
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
-              "Y-axis/Unit": "ul"
+              "Y-axis/Unit": "ul",
+              "Visible data/SmartDashboard/motor Feedforward": true,
+              "Visible data/SmartDashboard/motor PID output": true,
+              "Visible data/SmartDashboard/motor Voltage": true
+            }
+          },
+          "8,3": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/TunableNumbers/Motor Kp",
+              "_title": "SmartDashboard/TunableNumbers/Motor Kp",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "8,4": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/TunableNumbers/Motor Kv",
+              "_title": "SmartDashboard/TunableNumbers/Motor Kv",
+              "_glyph": 148,
+              "_showGlyph": false
             }
           }
         }

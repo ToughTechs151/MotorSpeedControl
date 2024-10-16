@@ -13,9 +13,8 @@ public class RobotModel {
 
   PDPSim simpdp;
 
-  // Mechanical launcher driven by motor with gear reduction for simulation purposes.
-  // Works in conjunction with LauncherSubsystem
-  MotorModel simLauncher;
+  // Motor with gear reduction for simulation purposes.
+  MotorModel simMotor;
 
   Random random = new Random();
   private final boolean isReal;
@@ -39,7 +38,7 @@ public class RobotModel {
       return;
     }
 
-    simLauncher = new MotorModel(robot.getRobotContainer().getMotorSubsystem());
+    simMotor = new MotorModel(robot.getRobotContainer().getMotorSubsystem());
 
     simpdp = new PDPSim(robot.getRobotContainer().getPdp());
     reset();
@@ -52,12 +51,12 @@ public class RobotModel {
     }
 
     // Update subsystem simulations
-    simLauncher.updateSim();
+    simMotor.updateSim();
 
     // Simulate battery voltage drop based on total simulated current
-    double launcherCurrent = Math.abs(simLauncher.getSimCurrent());
+    double motorCurrent = Math.abs(simMotor.getSimCurrent());
 
-    double[] simCurrents = {launcherCurrent};
+    double[] simCurrents = {motorCurrent};
 
     double unloadedVoltage = batteryVoltageV * 0.98 + ((random.nextDouble() / 10) - 0.05);
     double loadedVoltage =
@@ -67,7 +66,7 @@ public class RobotModel {
 
     simpdp.setVoltage(loadedVoltage);
     simpdp.setCurrent(0, currentDrawA + random.nextDouble());
-    simpdp.setCurrent(7, launcherCurrent);
+    simpdp.setCurrent(7, motorCurrent);
     simpdp.setTemperature(26.5);
   }
 

@@ -29,8 +29,7 @@ public class RobotContainer {
   private CommandXboxController operatorController =
       new CommandXboxController(OIConstants.OPERATOR_CONTROLLER_PORT);
 
-  // Now all the subsystems.
-  // The Intake and Launcher.
+  // Create the motor subsystem.
   private final MotorSubsystem motor = new MotorSubsystem(MotorSubsystem.initializeHardware());
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
@@ -47,7 +46,7 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    // Run the launcher at the defined speed while the right trigger is held.
+    // Run the motor at the defined speed while the right trigger is held.
     operatorController.rightTrigger().whileTrue(motor.runForward().withName("Motor: Run Forward"));
 
     operatorController.leftTrigger().whileTrue(motor.runReverse().withName("Motor: Run Reverse"));
@@ -83,9 +82,9 @@ public class RobotContainer {
   }
 
   /**
-   * Use this to get the Launcher Subsystem.
+   * Use this to get the Motor Subsystem.
    *
-   * @return a reference to the Launcher Subsystem
+   * @return a reference to the Motor Subsystem
    */
   public MotorSubsystem getMotorSubsystem() {
     return motor;

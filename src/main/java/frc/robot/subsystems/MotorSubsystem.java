@@ -17,9 +17,9 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.MotorConstants;
-import frc.robot.RobotPreferences;
+import frc.robot.util.TunableNumber;
 
-/** Motor with PID speed control. */
+/** Motor with PID plus feedforward speed control. */
 public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
   /** Hardware components for the motor subsystem. */
@@ -36,21 +36,28 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   private final CANSparkMax motor;
   private final RelativeEncoder encoder;
 
-  private PIDController motorController =
-      new PIDController(MotorConstants.MOTOR_KP_VOLTS_PER_RPM.getValue(), 0.0, 0.0);
-
-  SimpleMotorFeedforward feedforward =
-      new SimpleMotorFeedforward(
-          MotorConstants.MOTOR_KS_VOLTS.getValue(),
-          MotorConstants.MOTOR_KV_VOLTS_PER_RPM.getValue(),
-          MotorConstants.MOTOR_KA_VOLTS_PER_RPM2.getValue());
-
   private double pidOutput = 0.0;
   private double newFeedforward = 0;
   private boolean motorEnabled;
   private double motorVoltageCommand = 0.0;
 
-  private double setpoint = 600;
+  // Setup tunable numbers and controllers for the motor.
+  private TunableNumber proportionalGain =
+      new TunableNumber("Motor Kp", MotorConstants.MOTOR_KP_VOLTS_PER_RPM);
+  private TunableNumber staticGain = new TunableNumber("Motor Ks", MotorConstants.MOTOR_KS_VOLTS);
+  private TunableNumber velocityGain =
+      new TunableNumber("Motor Kv", MotorConstants.MOTOR_KV_VOLTS_PER_RPM);
+  private TunableNumber accelerationGain =
+      new TunableNumber("Motor Ka", MotorConstants.MOTOR_KA_VOLTS_PER_RPM2);
+  private TunableNumber motorRpm =
+      new TunableNumber("Motor Set Point", MotorConstants.MOTOR_SET_POINT_RPM);
+
+  private PIDController motorController = new PIDController(proportionalGain.get(), 0.0, 0.0);
+
+  private SimpleMotorFeedforward feedforward =
+      new SimpleMotorFeedforward(staticGain.get(), velocityGain.get(), accelerationGain.get());
+
+  private double setpoint = motorRpm.get();
 
   /** Create a new motorSubsystem controlled by a Profiled PID COntroller . */
   public MotorSubsystem(Hardware motorHardware) {
@@ -62,32 +69,24 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
   private void initializeMotor() {
 
-    RobotPreferences.initPreferencesArray(MotorConstants.getMotorPreferences());
-
-    initMotorEncoder();
-    initMotorMotor();
-
-    // Set tolerances that will be used to determine when the motor is at the goal velocity.
-    motorController.setTolerance(MotorConstants.MOTOR_TOLERANCE_RPM);
-
-    disableMotor();
-  }
-
-  private void initMotorMotor() {
     motor.restoreFactoryDefaults();
-    // Maybe we should print the faults if non-zero before clearing?
     motor.clearFaults();
+
     // Configure the motor to use EMF braking when idle and set voltage to 0.
     motor.setIdleMode(IdleMode.kBrake);
-    DataLogManager.log("Motor firmware version:" + motor.getFirmwareString());
-  }
 
-  private void initMotorEncoder() {
+    DataLogManager.log("Motor firmware version:" + motor.getFirmwareString());
+
     // Setup the encoder scale factors and reset encoder to 0. Since this is a relation encoder,
     // motor position will only be correct if the motor is in the starting rest position when
     // the subsystem is constructed.
     encoder.setPositionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
     encoder.setVelocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
+
+    // Set tolerances that will be used to determine when the motor is at the goal velocity.
+    motorController.setTolerance(MotorConstants.MOTOR_TOLERANCE_RPM);
+
+    disableMotor();
   }
 
   /**
@@ -159,7 +158,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
    * there.
    */
   private void setMotorSetPoint(double scale) {
-    loadPreferences();
+    loadTunableNumbers();
     motorController.setSetpoint(scale * setpoint);
 
     // Call enable() to configure and start the controller in case it is not already enabled.
@@ -179,7 +178,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
     // Don't enable if already enabled since this may cause control transients
     if (!motorEnabled) {
-      loadPreferences();
+      loadTunableNumbers();
 
       // Reset the PID controller to clear any previous state
       motorController.reset();
@@ -229,22 +228,20 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   }
 
   /**
-   * Load Preferences for values that can be tuned at runtime. This should only be called when the
-   * controller is disabled - for example from enable().
+   * Load values that can be tuned at runtime. This should only be called when the controller is
+   * disabled - for example from enable().
    */
-  private void loadPreferences() {
+  private void loadTunableNumbers() {
 
     // Read the motor speed set point
-    setpoint = MotorConstants.MOTOR_SET_POINT_RPM.getValue();
+    setpoint = motorRpm.get();
 
-    // Read Preferences for PID controller
-    motorController.setP(MotorConstants.MOTOR_KP_VOLTS_PER_RPM.getValue());
+    // Read tunable values for PID controller
+    motorController.setP(proportionalGain.get());
 
-    // Read Preferences for Feedforward and create a new instance
-    double staticGain = MotorConstants.MOTOR_KS_VOLTS.getValue();
-    double velocityGain = MotorConstants.MOTOR_KV_VOLTS_PER_RPM.getValue();
-    double accelerationGain = MotorConstants.MOTOR_KA_VOLTS_PER_RPM2.getValue();
-    feedforward = new SimpleMotorFeedforward(staticGain, velocityGain, accelerationGain);
+    // Read tunable values for Feedforward and create a new instance
+    feedforward =
+        new SimpleMotorFeedforward(staticGain.get(), velocityGain.get(), accelerationGain.get());
   }
 
   /** Close any objects that support it. */

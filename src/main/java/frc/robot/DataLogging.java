@@ -5,7 +5,6 @@ package frc.robot;
 import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.util.datalog.StringLogEntry;
-import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -19,7 +18,6 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.subsystems.MotorSubsystem;
 import java.util.Map;
 
@@ -37,10 +35,6 @@ public class DataLogging {
     // Starts recording to data log
     DataLogManager.start();
     final DataLog log = DataLogManager.getLog();
-
-    // Record the starting values of preferences
-    DataLogManager.log("Starting Preference Values:");
-    RobotPreferences.logPreferences();
 
     // Record both DS control and joystick data. To
     DriverStation.startDataLog(DataLogManager.getLog(), Constants.LOG_JOYSTICK_DATA);
@@ -156,16 +150,6 @@ public class DataLogging {
     sbCommandsTab.add(CommandScheduler.getInstance()).withSize(3, 2);
     sbCommandsTab.add(motor).withSize(3, 1);
 
-    // Add buttons to reset preferences to the default constant values
-    sbCommandsTab
-        .add(
-            new InstantCommand(
-                    () ->
-                        RobotPreferences.resetPreferencesArray(
-                            Constants.MotorConstants.getMotorPreferences()))
-                .withName("Reset Motor Preferences"))
-        .withSize(2, 1);
-
     // Add hardware sendables here
     pdpWidget.add("PDP", pdp);
 
@@ -177,35 +161,6 @@ public class DataLogging {
         .addNumber("PDP Temp", pdp::getTemperature)
         .withWidget(BuiltInWidgets.kDial)
         .withProperties(Map.of("min", 15, "max", 50));
-  }
-
-  /**
-   * Add a button for the command onto the Shuffleboard Commands tab.
-   *
-   * @param comName The name of the command.
-   * @param com The command object.
-   */
-  public void logCommand(String comName, Sendable com) {
-    sbCommandsTab.add(comName, com).withSize(2, 1);
-  }
-
-  /**
-   * Add a button for the command in the subsystem group. Usually called in the command constructor.
-   *
-   * <pre>{@code
-   * DataLogging.getInstance().logCommand(this.subsystem.getName(),
-   * this.getName(), this);
-   * }</pre>
-   *
-   * @param ssName The name of subsystem.
-   * @param comName The name of the command.
-   * @param com The command object.
-   */
-  public final void logCommand(String ssName, String comName, Sendable com) {
-    sbCommandsTab.getLayout(ssName, BuiltInLayouts.kList).withSize(2, 0).add(comName, com);
-    // ISSUE #2 Hide the command name label.
-    // Add property to layout to set label position to HIDDEN.
-    // See "Adding widgets to layouts" in Shuffleboard docs.
   }
 
   public void startLoopTime() {

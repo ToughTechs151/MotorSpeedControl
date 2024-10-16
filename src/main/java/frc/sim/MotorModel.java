@@ -26,10 +26,10 @@ public class MotorModel implements AutoCloseable {
       new DCMotorSim(
           motorGearbox, MotorConstants.MOTOR_GEAR_RATIO, MotorSimConstants.MOTOR_MOI_KG_METERS2);
 
-  /** Create a new ElevatorModel. */
-  public MotorModel(MotorSubsystem intakeLauncherSubsystemToSimulate) {
+  /** Create a new MotorModel. */
+  public MotorModel(MotorSubsystem motorSubsystemToSimulate) {
 
-    motorSubsystem = intakeLauncherSubsystemToSimulate;
+    motorSubsystem = motorSubsystemToSimulate;
     simulationInit();
 
     // There is nothing to add to the dashboard for this sim since output is motor speed.
