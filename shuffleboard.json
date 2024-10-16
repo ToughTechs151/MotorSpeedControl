@@ -37,14 +37,15 @@
         "vgap": 16.0,
         "titleType": 0,
         "tiles": {
-          "7,0": {
+          "6,0": {
             "size": [
               3,
-              3
+              4
             ],
             "content": {
               "_type": "Graph",
               "_source0": "network_table:///SmartDashboard/motor Current",
+              "_source1": "network_table:///Shuffleboard/Motor/Motor Current",
               "_title": "SmartDashboard/motor Current",
               "_glyph": 148,
               "_showGlyph": false,
@@ -54,13 +55,13 @@
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
               "Y-axis/Unit": "ul",
-              "Visible data/SmartDashboard/motor Current": true
+              "Visible data/Shuffleboard/Motor/Motor Current": true
             }
           },
-          "4,0": {
+          "0,0": {
             "size": [
               3,
-              3
+              4
             ],
             "content": {
               "_type": "Graph",
@@ -79,16 +80,17 @@
               "Visible data/SmartDashboard/motor Velocity": true
             }
           },
-          "4,3": {
+          "3,0": {
             "size": [
               3,
-              3
+              4
             ],
             "content": {
               "_type": "Graph",
               "_source0": "network_table:///SmartDashboard/motor Voltage",
               "_source1": "network_table:///SmartDashboard/motor Feedforward",
               "_source2": "network_table:///SmartDashboard/motor PID output",
+              "_source3": "network_table:///Shuffleboard/Motor/Motor Voltage",
               "_title": "SmartDashboard/motor PID output",
               "_glyph": 148,
               "_showGlyph": false,
@@ -98,12 +100,12 @@
               "Y-axis/Upper bound": 1.0,
               "Y-axis/Lower bound": -1.0,
               "Y-axis/Unit": "ul",
+              "Visible data/Shuffleboard/Motor/Motor Voltage": true,
               "Visible data/SmartDashboard/motor Feedforward": true,
-              "Visible data/SmartDashboard/motor PID output": true,
-              "Visible data/SmartDashboard/motor Voltage": true
+              "Visible data/SmartDashboard/motor PID output": true
             }
           },
-          "8,3": {
+          "9,0": {
             "size": [
               2,
               1
@@ -116,7 +118,7 @@
               "_showGlyph": false
             }
           },
-          "8,4": {
+          "9,1": {
             "size": [
               2,
               1
@@ -125,6 +127,58 @@
               "_type": "Text View",
               "_source0": "network_table:///SmartDashboard/TunableNumbers/Motor Kv",
               "_title": "SmartDashboard/TunableNumbers/Motor Kv",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "2,4": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/TunableNumbers/Motor Fixed Speed",
+              "_title": "SmartDashboard/TunableNumbers/Motor Fixed Speed",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "4,4": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/TunableNumbers/Motor Joystick Speed",
+              "_title": "SmartDashboard/TunableNumbers/Motor Joystick Speed",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "9,3": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/TunableNumbers/Motor Ka",
+              "_title": "SmartDashboard/TunableNumbers/Motor Ka",
+              "_glyph": 148,
+              "_showGlyph": false
+            }
+          },
+          "9,2": {
+            "size": [
+              2,
+              1
+            ],
+            "content": {
+              "_type": "Text View",
+              "_source0": "network_table:///SmartDashboard/TunableNumbers/Motor Ks",
+              "_title": "SmartDashboard/TunableNumbers/Motor Ks",
               "_glyph": 148,
               "_showGlyph": false
             }

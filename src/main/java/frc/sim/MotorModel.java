@@ -45,7 +45,7 @@ public class MotorModel implements AutoCloseable {
   /** Update the simulation model. */
   public void updateSim() {
 
-    double inputVoltage = motorSubsystem.getMotorVoltageCommand();
+    double inputVoltage = motorSubsystem.getVoltageCommand();
 
     motorSim.setInput(inputVoltage);
 
@@ -59,7 +59,7 @@ public class MotorModel implements AutoCloseable {
     // save the current so it can be retrieved later.
     sparkSim.setVelocity(simMotorSpeed);
     sparkSim.setPosition(newPosition);
-    simMotorCurrent = motorGearbox.getCurrent(1.0, motorSubsystem.getMotorVoltageCommand());
+    simMotorCurrent = motorGearbox.getCurrent(1.0, motorSubsystem.getVoltageCommand());
     sparkSim.setCurrent(simMotorCurrent);
 
     // SimBattery estimates loaded battery voltages

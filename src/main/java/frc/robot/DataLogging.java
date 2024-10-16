@@ -18,15 +18,14 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.MotorSubsystem;
 import java.util.Map;
 
 /** The DataLogging class contains all the logic for using telemetry. */
+@java.lang.SuppressWarnings("java:S6548")
 public class DataLogging {
 
   private DoubleLogEntry loopTime;
   private double startTime;
-  private ShuffleboardTab sbCommandsTab;
   private ShuffleboardLayout pdpWidget;
   private boolean everBrownout = false;
   private boolean prevDsConnectState;
@@ -51,8 +50,6 @@ public class DataLogging {
     pdpWidget = sbRobotTab.getLayout("PDP", BuiltInLayouts.kGrid).withSize(3, 6);
     ShuffleboardLayout rcWidget =
         sbRobotTab.getLayout("RobotController", BuiltInLayouts.kGrid).withSize(3, 3);
-
-    sbCommandsTab = Shuffleboard.getTab("Commands");
 
     /* sbRobotTab */
     rcWidget
@@ -144,11 +141,6 @@ public class DataLogging {
   public void dataLogRobotContainerInit(RobotContainer robotContainer) {
 
     PowerDistribution pdp = robotContainer.getPdp();
-    MotorSubsystem motor = robotContainer.getMotorSubsystem();
-
-    // Add widgets to the Commands tab
-    sbCommandsTab.add(CommandScheduler.getInstance()).withSize(3, 2);
-    sbCommandsTab.add(motor).withSize(3, 1);
 
     // Add hardware sendables here
     pdpWidget.add("PDP", pdp);

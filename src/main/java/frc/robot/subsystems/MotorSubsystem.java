@@ -8,6 +8,7 @@ import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -16,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.MotorConstants;
 import frc.robot.util.TunableNumber;
 
@@ -40,6 +42,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   private double newFeedforward = 0;
   private boolean motorEnabled;
   private double motorVoltageCommand = 0.0;
+  private double maxSpeed = 0.0;
 
   // Setup tunable numbers and controllers for the motor.
   private TunableNumber proportionalGain =
@@ -49,15 +52,15 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
       new TunableNumber("Motor Kv", MotorConstants.MOTOR_KV_VOLTS_PER_RPM);
   private TunableNumber accelerationGain =
       new TunableNumber("Motor Ka", MotorConstants.MOTOR_KA_VOLTS_PER_RPM2);
-  private TunableNumber motorRpm =
-      new TunableNumber("Motor Set Point", MotorConstants.MOTOR_SET_POINT_RPM);
+  private TunableNumber fixedRpm =
+      new TunableNumber("Motor Fixed Speed", MotorConstants.MOTOR_FIXED_SPEED_RPM);
+  private TunableNumber joystickRpm =
+      new TunableNumber("Motor Joystick Speed", MotorConstants.MOTOR_MAX_JOYSTICK_SPEED_RPM);
 
   private PIDController motorController = new PIDController(proportionalGain.get(), 0.0, 0.0);
 
   private SimpleMotorFeedforward feedforward =
       new SimpleMotorFeedforward(staticGain.get(), velocityGain.get(), accelerationGain.get());
-
-  private double setpoint = motorRpm.get();
 
   /** Create a new motorSubsystem controlled by a Profiled PID COntroller . */
   public MotorSubsystem(Hardware motorHardware) {
@@ -72,9 +75,6 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     motor.restoreFactoryDefaults();
     motor.clearFaults();
 
-    // Configure the motor to use EMF braking when idle and set voltage to 0.
-    motor.setIdleMode(IdleMode.kBrake);
-
     DataLogManager.log("Motor firmware version:" + motor.getFirmwareString());
 
     // Setup the encoder scale factors and reset encoder to 0. Since this is a relation encoder,
@@ -86,6 +86,8 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     // Set tolerances that will be used to determine when the motor is at the goal velocity.
     motorController.setTolerance(MotorConstants.MOTOR_TOLERANCE_RPM);
 
+    // Configure the motor to use EMF braking when idle and set voltage to 0.
+    motor.setIdleMode(IdleMode.kBrake);
     disableMotor();
   }
 
@@ -106,19 +108,21 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
     SmartDashboard.putBoolean("motor Enabled", motorEnabled);
     SmartDashboard.putNumber("motor Setpoint", motorController.getSetpoint());
-    SmartDashboard.putNumber("motor Velocity", encoder.getVelocity());
-    SmartDashboard.putNumber("motor Voltage", motorVoltageCommand);
-    SmartDashboard.putNumber("motor Current", motor.getOutputCurrent());
     SmartDashboard.putNumber("motor Feedforward", newFeedforward);
     SmartDashboard.putNumber("motor PID output", pidOutput);
+    // duplicate velocity here since value on Shuffleboard tab may be invalid in simulation
+    SmartDashboard.putNumber("motor Velocity", encoder.getVelocity());
   }
 
-  /** Generate the motor command using the PID controller output and feedforward. */
+  /**
+   * Generate the motor command using the PID controller output and feedforward. Save the individual
+   * values for logging.
+   */
   public void updateMotorController() {
     if (motorEnabled) {
       // Calculate the the motor command by adding the PID controller output and feedforward to run
       // the motor at the desired speed. Store the individual values for logging.
-      pidOutput = motorController.calculate(getMotorSpeed());
+      pidOutput = motorController.calculate(getSpeed());
       newFeedforward = feedforward.calculate(motorController.getSetpoint());
       motorVoltageCommand = pidOutput + newFeedforward;
 
@@ -133,33 +137,57 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     motor.setVoltage(motorVoltageCommand);
   }
 
-  /** Returns a Command that runs the motor forward at the current set speed. */
+  /** Returns a Command that runs the motor forward at a tunable set speed. */
   public Command runForward() {
     return new FunctionalCommand(
-        () -> setMotorSetPoint(1.0),
+        () -> setFixedSetPoint(1.0),
         this::updateMotorController,
         interrupted -> disableMotor(),
         () -> false,
         this);
   }
 
-  /** Returns a Command that runs the motor in reverse at the current set speed. */
+  /** Returns a Command that runs the motor in reverse at a tunable set speed. */
   public Command runReverse() {
     return new FunctionalCommand(
-        () -> setMotorSetPoint(-1.0),
+        () -> setFixedSetPoint(-1.0),
         this::updateMotorController,
         interrupted -> disableMotor(),
         () -> false,
         this);
+  }
+
+  /** Setup the command to control via joystick using a tunable max speed. */
+  public Command getJoystickCommand(CommandXboxController driverController) {
+
+    return new FunctionalCommand(
+        this::setMaxAndEnable,
+        () -> {
+          motorController.setSetpoint(
+              -maxSpeed
+                  * MathUtil.applyDeadband(
+                      driverController.getLeftY(), MotorConstants.JOYSTICK_DEADBAND));
+          updateMotorController();
+        },
+        interrupted -> disableMotor(),
+        () -> false,
+        this);
+  }
+
+  /** Set the max speed using the tunable number and enable the motor. */
+  private void setMaxAndEnable() {
+    maxSpeed = joystickRpm.get();
+
+    // Call enable() to configure and start the controller in case it is not already enabled.
+    enableMotor();
   }
 
   /**
-   * Set the setpoint for the motor. The PIDController drives the motor to this speed and holds it
-   * there.
+   * Set the setpoint for the motor based on the tunable number. The PIDController drives the motor
+   * to this speed and holds it there.
    */
-  private void setMotorSetPoint(double scale) {
-    loadTunableNumbers();
-    motorController.setSetpoint(scale * setpoint);
+  private void setFixedSetPoint(double scale) {
+    motorController.setSetpoint(scale * fixedRpm.get());
 
     // Call enable() to configure and start the controller in case it is not already enabled.
     enableMotor();
@@ -178,7 +206,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
     // Don't enable if already enabled since this may cause control transients
     if (!motorEnabled) {
-      loadTunableNumbers();
+      loadPIDFTunableNumbers();
 
       // Reset the PID controller to clear any previous state
       motorController.reset();
@@ -194,7 +222,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
               + " Setpoint="
               + motorController.getSetpoint()
               + " CurSpeed="
-              + getMotorSpeed());
+              + getSpeed());
     }
   }
 
@@ -214,27 +242,44 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     if (currentCommand != null) {
       CommandScheduler.getInstance().cancel(currentCommand);
     }
-    DataLogManager.log("motor Disabled CurSpeed=" + getMotorSpeed());
+    DataLogManager.log("motor Disabled CurSpeed=" + getSpeed());
+  }
+
+  /**
+   * Set the motor idle mode to brake or coast.
+   *
+   * @param enableBrake Enable motor braking when idle
+   */
+  public void setBrakeMode(boolean enableBrake) {
+    if (enableBrake) {
+      DataLogManager.log("Motor set to brake mode");
+      motor.setIdleMode(IdleMode.kBrake);
+    } else {
+      DataLogManager.log("Motor set to coast mode");
+      motor.setIdleMode(IdleMode.kCoast);
+    }
   }
 
   /** Returns the motor speed for PID control and logging (Units are RPM). */
-  public double getMotorSpeed() {
+  public double getSpeed() {
     return encoder.getVelocity();
   }
 
   /** Returns the motor motor commanded voltage. */
-  public double getMotorVoltageCommand() {
+  public double getVoltageCommand() {
     return motorVoltageCommand;
   }
 
-  /**
-   * Load values that can be tuned at runtime. This should only be called when the controller is
-   * disabled - for example from enable().
-   */
-  private void loadTunableNumbers() {
+  /** Returns the motor current. */
+  public double getCurrent() {
+    return motor.getOutputCurrent();
+  }
 
-    // Read the motor speed set point
-    setpoint = motorRpm.get();
+  /**
+   * Load PIDF values that can be tuned at runtime. This should only be called when the controller
+   * is disabled - for example from enable().
+   */
+  private void loadPIDFTunableNumbers() {
 
     // Read tunable values for PID controller
     motorController.setP(proportionalGain.get());
