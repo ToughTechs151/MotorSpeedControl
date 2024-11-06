@@ -4,10 +4,15 @@
 
 package frc.robot.subsystems;
 
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.EncoderConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -26,17 +31,19 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
   /** Hardware components for the motor subsystem. */
   public static class Hardware {
-    CANSparkMax motor;
+    SparkMax motor;
     RelativeEncoder encoder;
 
-    public Hardware(CANSparkMax motor, RelativeEncoder encoder) {
+    public Hardware(SparkMax motor, RelativeEncoder encoder) {
       this.motor = motor;
       this.encoder = encoder;
     }
   }
 
-  private final CANSparkMax motor;
+  private final SparkMax motor;
   private final RelativeEncoder encoder;
+  private final SparkMaxConfig motorConfig = new SparkMaxConfig();
+  private final EncoderConfig encoderConfig = new EncoderConfig();
 
   private double pidOutput = 0.0;
   private double newFeedforward = 0;
@@ -72,22 +79,21 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
   private void initializeMotor() {
 
-    motor.restoreFactoryDefaults();
+    motorConfig.idleMode(IdleMode.kBrake);
+    motorConfig.smartCurrentLimit(40);
+    
+    // Setup the encoder scale factors 
+    encoderConfig.positionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
+    encoderConfig.velocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
+    motorConfig.apply(encoderConfig);
+    motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     motor.clearFaults();
 
     DataLogManager.log("Motor firmware version:" + motor.getFirmwareString());
 
-    // Setup the encoder scale factors and reset encoder to 0. Since this is a relation encoder,
-    // motor position will only be correct if the motor is in the starting rest position when
-    // the subsystem is constructed.
-    encoder.setPositionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
-    encoder.setVelocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
-
     // Set tolerances that will be used to determine when the motor is at the goal velocity.
     motorController.setTolerance(MotorConstants.MOTOR_TOLERANCE_RPM);
 
-    // Configure the motor to use EMF braking when idle and set voltage to 0.
-    motor.setIdleMode(IdleMode.kBrake);
     disableMotor();
   }
 
@@ -97,10 +103,10 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
    * @return Hardware object containing all necessary devices for this subsystem
    */
   public static Hardware initializeHardware() {
-    CANSparkMax motorMotor = new CANSparkMax(MotorConstants.MOTOR_PORT, MotorType.kBrushless);
-    RelativeEncoder motorEncoder = motorMotor.getEncoder();
+    SparkMax motor = new SparkMax(MotorConstants.MOTOR_PORT, MotorType.kBrushless);
+    RelativeEncoder encoder = motor.getEncoder();
 
-    return new Hardware(motorMotor, motorEncoder);
+    return new Hardware(motor, encoder);
   }
 
   @Override
@@ -253,11 +259,13 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   public void setBrakeMode(boolean enableBrake) {
     if (enableBrake) {
       DataLogManager.log("Motor set to brake mode");
-      motor.setIdleMode(IdleMode.kBrake);
+      motorConfig.idleMode(IdleMode.kBrake);
     } else {
       DataLogManager.log("Motor set to coast mode");
-      motor.setIdleMode(IdleMode.kCoast);
+      motorConfig.idleMode(IdleMode.kCoast);
     }
+    motor.configure(motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
   }
 
   /** Returns the motor speed for PID control and logging (Units are RPM). */

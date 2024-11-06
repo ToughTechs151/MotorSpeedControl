@@ -4,7 +4,11 @@
 
 package frc.sim;
 
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -22,9 +26,11 @@ public class MotorModel implements AutoCloseable {
   // The arm gearbox represents a gearbox containing one motor.
   private final DCMotor motorGearbox = DCMotor.getNEO(1);
 
-  private final DCMotorSim motorSim =
-      new DCMotorSim(
-          motorGearbox, MotorConstants.MOTOR_GEAR_RATIO, MotorSimConstants.MOTOR_MOI_KG_METERS2);
+  private final LinearSystem<N2, N1, N2> plant =
+      LinearSystemId.createDCMotorSystem(
+          motorGearbox, MotorSimConstants.MOTOR_MOI_KG_METERS2, MotorConstants.MOTOR_GEAR_RATIO);
+
+  private final DCMotorSim motorSim = new DCMotorSim(plant, motorGearbox);
 
   /** Create a new MotorModel. */
   public MotorModel(MotorSubsystem motorSubsystemToSimulate) {
