@@ -12,7 +12,6 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -81,8 +80,8 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
     motorConfig.idleMode(IdleMode.kBrake);
     motorConfig.smartCurrentLimit(40);
-    
-    // Setup the encoder scale factors 
+
+    // Setup the encoder scale factors
     encoderConfig.positionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
     encoderConfig.velocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
     motorConfig.apply(encoderConfig);
@@ -264,8 +263,8 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
       DataLogManager.log("Motor set to coast mode");
       motorConfig.idleMode(IdleMode.kCoast);
     }
-    motor.configure(motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-
+    motor.configure(
+        motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   /** Returns the motor speed for PID control and logging (Units are RPM). */
