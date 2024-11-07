@@ -51,7 +51,6 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   private double pidOutput = 0.0;
   private double newFeedforward = 0;
   private boolean motorEnabled;
-  private double motorVoltageCommand = 0.0;
   private double maxSpeed = 0.0;
 
   // Setup tunable numbers and controllers for the motor.
@@ -89,6 +88,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     encoderConfig.positionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
     encoderConfig.velocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
     motorConfig.apply(encoderConfig);
+
     motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     motor.clearFaults();
 
@@ -119,8 +119,6 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     SmartDashboard.putNumber("motor Setpoint", motorController.getSetpoint());
     SmartDashboard.putNumber("motor Feedforward", newFeedforward);
     SmartDashboard.putNumber("motor PID output", pidOutput);
-    // duplicate velocity here since value on Shuffleboard tab may be invalid in simulation
-    SmartDashboard.putNumber("motor Velocity", encoder.getVelocity());
   }
 
   /**
@@ -134,7 +132,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
       pidOutput = motorController.calculate(getSpeed());
       AngularVelocity velocityRpm = RPM.of(motorController.getSetpoint());
       newFeedforward = feedforward.calculate(velocityRpm).in(Volts);
-      motorVoltageCommand = pidOutput + newFeedforward;
+      motor.setVoltage(pidOutput + newFeedforward);
 
     } else {
       // If the motor isn't enabled, set the motor command to 0. In this state the motor
@@ -142,9 +140,8 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
       // if that mode is used.
       pidOutput = 0;
       newFeedforward = 0;
-      motorVoltageCommand = 0;
+      motor.setVoltage(0);
     }
-    motor.setVoltage(motorVoltageCommand);
   }
 
   /** Returns a Command that runs the motor forward at a tunable set speed. */
@@ -216,7 +213,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
     // Don't enable if already enabled since this may cause control transients
     if (!motorEnabled) {
-      loadPIDFTunableNumbers();
+      loadPidfTunableNumbers();
 
       // Reset the PID controller to clear any previous state
       motorController.reset();
@@ -277,9 +274,9 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     return encoder.getVelocity();
   }
 
-  /** Returns the motor motor commanded voltage. */
+  /** Returns the motor commanded voltage. */
   public double getVoltageCommand() {
-    return motorVoltageCommand;
+    return motor.getAppliedOutput() * motor.getBusVoltage();
   }
 
   /** Returns the motor current. */
@@ -287,11 +284,16 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     return motor.getOutputCurrent();
   }
 
+  /** Returns the motor for simulation. */
+  public SparkMax getMotor() {
+    return motor;
+  }
+
   /**
    * Load PIDF values that can be tuned at runtime. This should only be called when the controller
    * is disabled - for example from enable().
    */
-  private void loadPIDFTunableNumbers() {
+  private void loadPidfTunableNumbers() {
 
     // Read tunable values for PID controller
     motorController.setP(proportionalGain.get());
