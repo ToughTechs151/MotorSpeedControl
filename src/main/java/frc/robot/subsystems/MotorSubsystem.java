@@ -12,7 +12,6 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
@@ -46,7 +45,6 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   private final SparkMax motor;
   private final RelativeEncoder encoder;
   private final SparkMaxConfig motorConfig = new SparkMaxConfig();
-  private final EncoderConfig encoderConfig = new EncoderConfig();
 
   private double pidOutput = 0.0;
   private double newFeedforward = 0;
@@ -82,12 +80,13 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   private void initializeMotor() {
 
     motorConfig.idleMode(IdleMode.kBrake);
-    motorConfig.smartCurrentLimit(40);
+    motorConfig.smartCurrentLimit(MotorConstants.CURRENT_LIMIT);
 
     // Setup the encoder scale factors
-    encoderConfig.positionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
-    encoderConfig.velocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
-    motorConfig.apply(encoderConfig);
+    motorConfig.encoder.positionConversionFactor(
+        MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
+    motorConfig.encoder.velocityConversionFactor(
+        MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
 
     motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     motor.clearFaults();

@@ -49,6 +49,7 @@ public final class Constants {
     public static final double MOTOR_ROTATIONS_PER_ENCODER_ROTATION = 1.0 / MOTOR_GEAR_RATIO;
     public static final double MOTOR_TOLERANCE_RPM = 100;
     public static final double JOYSTICK_DEADBAND = 0.1;
+    public static final int CURRENT_LIMIT = 40;
   }
 
   /** Constants used for assigning operator input. */
