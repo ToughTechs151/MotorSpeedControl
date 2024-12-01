@@ -257,15 +257,16 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
    * @param enableBrake Enable motor braking when idle
    */
   public void setBrakeMode(boolean enableBrake) {
+    SparkMaxConfig brakeConfig = new SparkMaxConfig();
     if (enableBrake) {
       DataLogManager.log("Motor set to brake mode");
-      motorConfig.idleMode(IdleMode.kBrake);
+      brakeConfig.idleMode(IdleMode.kBrake);
     } else {
       DataLogManager.log("Motor set to coast mode");
-      motorConfig.idleMode(IdleMode.kCoast);
+      brakeConfig.idleMode(IdleMode.kCoast);
     }
     motor.configure(
-        motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        brakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   /** Returns the motor speed for PID control and logging (Units are RPM). */
