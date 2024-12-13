@@ -1,8 +1,8 @@
 package frc.robot;
 
-import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -41,7 +41,6 @@ class Splash {
       String filename, Boolean isResource, int rowIndex, int colIndex, int widthIndex) {
     byte[] buffer = new byte[1024];
     ShuffleboardTab tab;
-    GenericEntry field;
     String fs = "/";
     String filepath =
         (RobotBase.isSimulation()
@@ -63,6 +62,8 @@ class Splash {
       }
 
       try {
+        tab = Shuffleboard.getTab("Status");
+
         for (int length = 0; (length = statusfile.read(buffer)) != -1; ) {
           String buf =
               new String(buffer, StandardCharsets.UTF_8).replaceAll("\\s", " ").replace("\0", "");
@@ -70,10 +71,10 @@ class Splash {
           String fn = tfn.substring(0, 1).toUpperCase(Locale.ENGLISH) + tfn.substring(1);
           System.out.write(buffer, 0, length);
           SmartDashboard.putString(fn, buf);
-          tab = Shuffleboard.getTab("Status");
-          field =
-              tab.add(fn, buf).withPosition(colIndex, rowIndex).withSize(widthIndex, 1).getEntry();
-          field.setString(buf);
+          tab.add(fn, buf)
+              .withWidget(BuiltInWidgets.kTextView)
+              .withPosition(colIndex, rowIndex)
+              .withSize(widthIndex, 1);
         }
       } finally {
         System.out.println();

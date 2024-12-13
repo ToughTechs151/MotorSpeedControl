@@ -4,13 +4,20 @@
 
 package frc.robot.subsystems;
 
-import com.revrobotics.CANSparkBase.IdleMode;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,22 +33,22 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
   /** Hardware components for the motor subsystem. */
   public static class Hardware {
-    CANSparkMax motor;
+    SparkMax motor;
     RelativeEncoder encoder;
 
-    public Hardware(CANSparkMax motor, RelativeEncoder encoder) {
+    public Hardware(SparkMax motor, RelativeEncoder encoder) {
       this.motor = motor;
       this.encoder = encoder;
     }
   }
 
-  private final CANSparkMax motor;
+  private final SparkMax motor;
   private final RelativeEncoder encoder;
+  private final SparkMaxConfig motorConfig = new SparkMaxConfig();
 
   private double pidOutput = 0.0;
   private double newFeedforward = 0;
   private boolean motorEnabled;
-  private double motorVoltageCommand = 0.0;
   private double maxSpeed = 0.0;
 
   // Setup tunable numbers and controllers for the motor.
@@ -72,22 +79,23 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
   private void initializeMotor() {
 
-    motor.restoreFactoryDefaults();
+    motorConfig.idleMode(IdleMode.kBrake);
+    motorConfig.smartCurrentLimit(MotorConstants.CURRENT_LIMIT);
+
+    // Setup the encoder scale factors
+    motorConfig.encoder.positionConversionFactor(
+        MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
+    motorConfig.encoder.velocityConversionFactor(
+        MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
+
+    motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     motor.clearFaults();
 
     DataLogManager.log("Motor firmware version:" + motor.getFirmwareString());
 
-    // Setup the encoder scale factors and reset encoder to 0. Since this is a relation encoder,
-    // motor position will only be correct if the motor is in the starting rest position when
-    // the subsystem is constructed.
-    encoder.setPositionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
-    encoder.setVelocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
-
     // Set tolerances that will be used to determine when the motor is at the goal velocity.
     motorController.setTolerance(MotorConstants.MOTOR_TOLERANCE_RPM);
 
-    // Configure the motor to use EMF braking when idle and set voltage to 0.
-    motor.setIdleMode(IdleMode.kBrake);
     disableMotor();
   }
 
@@ -97,10 +105,10 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
    * @return Hardware object containing all necessary devices for this subsystem
    */
   public static Hardware initializeHardware() {
-    CANSparkMax motorMotor = new CANSparkMax(MotorConstants.MOTOR_PORT, MotorType.kBrushless);
-    RelativeEncoder motorEncoder = motorMotor.getEncoder();
+    SparkMax motor = new SparkMax(MotorConstants.MOTOR_PORT, MotorType.kBrushless);
+    RelativeEncoder encoder = motor.getEncoder();
 
-    return new Hardware(motorMotor, motorEncoder);
+    return new Hardware(motor, encoder);
   }
 
   @Override
@@ -110,8 +118,6 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     SmartDashboard.putNumber("motor Setpoint", motorController.getSetpoint());
     SmartDashboard.putNumber("motor Feedforward", newFeedforward);
     SmartDashboard.putNumber("motor PID output", pidOutput);
-    // duplicate velocity here since value on Shuffleboard tab may be invalid in simulation
-    SmartDashboard.putNumber("motor Velocity", encoder.getVelocity());
   }
 
   /**
@@ -123,8 +129,9 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
       // Calculate the the motor command by adding the PID controller output and feedforward to run
       // the motor at the desired speed. Store the individual values for logging.
       pidOutput = motorController.calculate(getSpeed());
-      newFeedforward = feedforward.calculate(motorController.getSetpoint());
-      motorVoltageCommand = pidOutput + newFeedforward;
+      AngularVelocity velocityRpm = RPM.of(motorController.getSetpoint());
+      newFeedforward = feedforward.calculate(velocityRpm).in(Volts);
+      motor.setVoltage(pidOutput + newFeedforward);
 
     } else {
       // If the motor isn't enabled, set the motor command to 0. In this state the motor
@@ -132,9 +139,8 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
       // if that mode is used.
       pidOutput = 0;
       newFeedforward = 0;
-      motorVoltageCommand = 0;
+      motor.setVoltage(0);
     }
-    motor.setVoltage(motorVoltageCommand);
   }
 
   /** Returns a Command that runs the motor forward at a tunable set speed. */
@@ -206,7 +212,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
 
     // Don't enable if already enabled since this may cause control transients
     if (!motorEnabled) {
-      loadPIDFTunableNumbers();
+      loadPidfTunableNumbers();
 
       // Reset the PID controller to clear any previous state
       motorController.reset();
@@ -251,13 +257,16 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
    * @param enableBrake Enable motor braking when idle
    */
   public void setBrakeMode(boolean enableBrake) {
+    SparkMaxConfig brakeConfig = new SparkMaxConfig();
     if (enableBrake) {
       DataLogManager.log("Motor set to brake mode");
-      motor.setIdleMode(IdleMode.kBrake);
+      brakeConfig.idleMode(IdleMode.kBrake);
     } else {
       DataLogManager.log("Motor set to coast mode");
-      motor.setIdleMode(IdleMode.kCoast);
+      brakeConfig.idleMode(IdleMode.kCoast);
     }
+    motor.configure(
+        brakeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   /** Returns the motor speed for PID control and logging (Units are RPM). */
@@ -265,9 +274,9 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     return encoder.getVelocity();
   }
 
-  /** Returns the motor motor commanded voltage. */
+  /** Returns the motor commanded voltage. */
   public double getVoltageCommand() {
-    return motorVoltageCommand;
+    return motor.getAppliedOutput() * motor.getBusVoltage();
   }
 
   /** Returns the motor current. */
@@ -275,11 +284,16 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     return motor.getOutputCurrent();
   }
 
+  /** Returns the motor for simulation. */
+  public SparkMax getMotor() {
+    return motor;
+  }
+
   /**
    * Load PIDF values that can be tuned at runtime. This should only be called when the controller
    * is disabled - for example from enable().
    */
-  private void loadPIDFTunableNumbers() {
+  private void loadPidfTunableNumbers() {
 
     // Read tunable values for PID controller
     motorController.setP(proportionalGain.get());

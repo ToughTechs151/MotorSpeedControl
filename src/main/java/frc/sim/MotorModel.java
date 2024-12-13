@@ -4,7 +4,12 @@
 
 package frc.sim;
 
+import com.revrobotics.sim.SparkMaxSim;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
@@ -17,14 +22,16 @@ public class MotorModel implements AutoCloseable {
 
   private final MotorSubsystem motorSubsystem;
   private double simMotorCurrent = 0.0;
-  private CANSparkMaxSim sparkSim;
+  private SparkMaxSim sparkSim;
 
   // The arm gearbox represents a gearbox containing one motor.
   private final DCMotor motorGearbox = DCMotor.getNEO(1);
 
-  private final DCMotorSim motorSim =
-      new DCMotorSim(
-          motorGearbox, MotorConstants.MOTOR_GEAR_RATIO, MotorSimConstants.MOTOR_MOI_KG_METERS2);
+  private final LinearSystem<N2, N1, N2> plant =
+      LinearSystemId.createDCMotorSystem(
+          motorGearbox, MotorSimConstants.MOTOR_MOI_KG_METERS2, MotorConstants.MOTOR_GEAR_RATIO);
+
+  private final DCMotorSim motorSim = new DCMotorSim(plant, motorGearbox);
 
   /** Create a new MotorModel. */
   public MotorModel(MotorSubsystem motorSubsystemToSimulate) {
@@ -39,28 +46,24 @@ public class MotorModel implements AutoCloseable {
   public void simulationInit() {
 
     // Setup a simulation of the CANSparkMax and methods to set values
-    sparkSim = new CANSparkMaxSim(MotorConstants.MOTOR_PORT);
+    sparkSim = new SparkMaxSim(motorSubsystem.getMotor(), motorGearbox);
   }
 
   /** Update the simulation model. */
   public void updateSim() {
 
     double inputVoltage = motorSubsystem.getVoltageCommand();
-
     motorSim.setInput(inputVoltage);
 
     // Next, we update it. The standard loop time is 20ms.
     motorSim.update(0.020);
 
-    double newPosition = motorSim.getAngularPositionRotations();
     double simMotorSpeed = motorSim.getAngularVelocityRPM();
 
     // Finally, we set our simulated encoder's readings and simulated battery voltage and
     // save the current so it can be retrieved later.
-    sparkSim.setVelocity(simMotorSpeed);
-    sparkSim.setPosition(newPosition);
-    simMotorCurrent = motorGearbox.getCurrent(1.0, motorSubsystem.getVoltageCommand());
-    sparkSim.setCurrent(simMotorCurrent);
+    sparkSim.iterate(simMotorSpeed, 12.0, 0.02);
+    simMotorCurrent = motorGearbox.getCurrent(1.0, inputVoltage);
 
     // SimBattery estimates loaded battery voltages
     RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(simMotorCurrent));

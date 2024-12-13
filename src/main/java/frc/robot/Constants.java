@@ -34,14 +34,14 @@ public final class Constants {
       throw new IllegalStateException("MotorConstants Utility Class");
     }
 
-    public static final int MOTOR_PORT = 9;
+    public static final int MOTOR_PORT = 14;
 
     // Constants tunable through TunableNumbers
     public static final double MOTOR_FIXED_SPEED_RPM = 2000.0;
     public static final double MOTOR_MAX_JOYSTICK_SPEED_RPM = 4000.0;
-    public static final double MOTOR_KP_VOLTS_PER_RPM = 6.0 / 1000;
+    public static final double MOTOR_KP_VOLTS_PER_RPM = 0.00005;
     public static final double MOTOR_KS_VOLTS = 0.0;
-    public static final double MOTOR_KV_VOLTS_PER_RPM = 6.0 / 5000;
+    public static final double MOTOR_KV_VOLTS_PER_RPM = 0.002;
     public static final double MOTOR_KA_VOLTS_PER_RPM2 = 0.0;
 
     public static final double MOTOR_GEAR_RATIO =
@@ -49,6 +49,7 @@ public final class Constants {
     public static final double MOTOR_ROTATIONS_PER_ENCODER_ROTATION = 1.0 / MOTOR_GEAR_RATIO;
     public static final double MOTOR_TOLERANCE_RPM = 100;
     public static final double JOYSTICK_DEADBAND = 0.1;
+    public static final int CURRENT_LIMIT = 40;
   }
 
   /** Constants used for assigning operator input. */
