@@ -45,7 +45,7 @@ public class MotorModel implements AutoCloseable {
   /** Initialize the arm simulation. */
   public void simulationInit() {
 
-    // Setup a simulation of the CANSparkMax and methods to set values
+    // Setup a simulation of the SparkMax and methods to set values
     sparkSim = new SparkMaxSim(motorSubsystem.getMotor(), motorGearbox);
   }
 

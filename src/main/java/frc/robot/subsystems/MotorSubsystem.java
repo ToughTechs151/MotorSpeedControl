@@ -83,8 +83,6 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     motorConfig.smartCurrentLimit(MotorConstants.CURRENT_LIMIT);
 
     // Setup the encoder scale factors
-    motorConfig.encoder.positionConversionFactor(
-        MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
     motorConfig.encoder.velocityConversionFactor(
         MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
 
@@ -118,6 +116,9 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     SmartDashboard.putNumber("motor Setpoint", motorController.getSetpoint());
     SmartDashboard.putNumber("motor Feedforward", newFeedforward);
     SmartDashboard.putNumber("motor PID output", pidOutput);
+    SmartDashboard.putNumber(
+        "motor Position",
+        encoder.getPosition() * MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
   }
 
   /**
