@@ -17,14 +17,14 @@ import frc.robot.Constants.MotorConstants;
 import frc.robot.subsystems.MotorSubsystem;
 import frc.sim.Constants.MotorSimConstants;
 
-/** A robot arm simulation based on a linear system model with Mech2d display. */
+/** A robot motor simulation based on a linear system model with Mech2d display. */
 public class MotorModel implements AutoCloseable {
 
   private final MotorSubsystem motorSubsystem;
   private double simMotorCurrent = 0.0;
   private SparkMaxSim sparkSim;
 
-  // The arm gearbox represents a gearbox containing one motor.
+  // The motor gearbox represents a gearbox containing one motor.
   private final DCMotor motorGearbox = DCMotor.getNEO(1);
 
   private final LinearSystem<N2, N1, N2> plant =
@@ -42,7 +42,7 @@ public class MotorModel implements AutoCloseable {
     // There is nothing to add to the dashboard for this sim since output is motor speed.
   }
 
-  /** Initialize the arm simulation. */
+  /** Initialize the simulation. */
   public void simulationInit() {
 
     // Setup a simulation of the SparkMax and methods to set values
