@@ -34,10 +34,10 @@ public final class Constants {
       throw new IllegalStateException("MotorConstants Utility Class");
     }
 
-    public static final int MOTOR_PORT = 14;
+    public static final int MOTOR_PORT = 1;
 
     public static final double MOTOR_GEAR_RATIO =
-        10.0; // Ratio of motor rotations to output rotations
+        1.0; // Ratio of motor rotations to output rotations
     public static final double MOTOR_ROTATIONS_PER_ENCODER_ROTATION = 1.0 / MOTOR_GEAR_RATIO;
     public static final double MOTOR_TOLERANCE_RPM = 100;
     public static final double JOYSTICK_DEADBAND = 0.1;
