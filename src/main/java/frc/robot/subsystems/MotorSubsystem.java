@@ -78,11 +78,10 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     motorConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(MotorConstants.CURRENT_LIMIT);
 
     // Setup the encoder scale factors
-    motorConfig.encoder.velocityConversionFactor(
-        MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
-    // .positionConversionFactor(1.0); // Values other than 1.0 don't work with SparkMaxSim.
-    // Use a manual gain conversion if needed when calling. encoder.getPosition() in either sim or
-    // real
+    motorConfig
+        .encoder
+        .velocityConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION)
+        .positionConversionFactor(MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
 
     motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     motor.clearFaults();
@@ -114,9 +113,7 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     SmartDashboard.putNumber("motor Setpoint", motorController.getSetpoint());
     SmartDashboard.putNumber("motor Feedforward", newFeedforward);
     SmartDashboard.putNumber("motor PID output", pidOutput);
-    SmartDashboard.putNumber(
-        "motor Position",
-        encoder.getPosition() * MotorConstants.MOTOR_ROTATIONS_PER_ENCODER_ROTATION);
+    SmartDashboard.putNumber("motor Position", encoder.getPosition());
   }
 
   /**
