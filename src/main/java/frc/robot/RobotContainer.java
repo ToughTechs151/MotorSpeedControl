@@ -6,11 +6,8 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.MotorSubsystem;
@@ -39,7 +36,8 @@ public class RobotContainer {
 
     // Configure the button bindings and Shuffleboard
     configureButtonBindings();
-    setupShuffleboard();
+
+    SmartDashboard.putData(motor);
 
     // Set the default motor command to control via the joystick
     motor.setDefaultCommand(
@@ -52,47 +50,6 @@ public class RobotContainer {
     operatorController.rightTrigger().whileTrue(motor.runForward().withName("Motor: Run Forward"));
 
     operatorController.leftTrigger().whileTrue(motor.runReverse().withName("Motor: Run Reverse"));
-  }
-
-  /** Setup a tab on Shuffleboard for motor status and commands. */
-  private void setupShuffleboard() {
-    ShuffleboardTab sbMotorTab = Shuffleboard.getTab("Motor");
-
-    sbMotorTab
-        .add(
-            new InstantCommand(() -> motor.setBrakeMode(true))
-                .ignoringDisable(true)
-                .withName("Brake Mode"))
-        .withSize(3, 1)
-        .withPosition(0, 0);
-
-    sbMotorTab
-        .add(
-            new InstantCommand(() -> motor.setBrakeMode(false))
-                .ignoringDisable(true)
-                .withName("Coast Mode"))
-        .withSize(3, 1)
-        .withPosition(0, 1);
-
-    sbMotorTab
-        .addNumber("Motor Voltage", motor::getVoltageCommand)
-        .withWidget(BuiltInWidgets.kTextView)
-        .withSize(3, 1)
-        .withPosition(3, 0);
-
-    sbMotorTab // This value may be invalid in simulation
-        .addNumber("Motor Speed", motor::getSpeed)
-        .withWidget(BuiltInWidgets.kTextView)
-        .withSize(3, 1)
-        .withPosition(3, 1);
-
-    sbMotorTab
-        .addNumber("Motor Current", motor::getCurrent)
-        .withWidget(BuiltInWidgets.kTextView)
-        .withSize(3, 1)
-        .withPosition(3, 2);
-
-    sbMotorTab.add(motor).withSize(3, 1).withPosition(0, 2);
   }
 
   /**

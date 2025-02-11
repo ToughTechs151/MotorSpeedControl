@@ -4,21 +4,12 @@ package frc.robot;
 
 import edu.wpi.first.util.datalog.DataLog;
 import edu.wpi.first.util.datalog.DoubleLogEntry;
-import edu.wpi.first.util.datalog.StringLogEntry;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.livewindow.LiveWindow;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.EventImportance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import java.util.Map;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /** The DataLogging class contains all the logic for using telemetry. */
 @java.lang.SuppressWarnings("java:S6548")
@@ -26,9 +17,7 @@ public class DataLogging {
 
   private DoubleLogEntry loopTime;
   private double startTime;
-  private ShuffleboardLayout pdpWidget;
   private boolean everBrownout = false;
-  private boolean prevDsConnectState;
 
   private DataLogging() {
     // Starts recording to data log
@@ -38,57 +27,7 @@ public class DataLogging {
     // Record both DS control and joystick data. To
     DriverStation.startDataLog(DataLogManager.getLog(), Constants.LOG_JOYSTICK_DATA);
 
-    if (Constants.LW_TELEMETRY_ENABLE) {
-      // In 2022 code this is the default, in 2023 the default changes
-      // and they add the enable call.
-      // LiveWindow.enableAllTelemetry()
-    } else {
-      LiveWindow.disableAllTelemetry();
-    }
-
-    ShuffleboardTab sbRobotTab = Shuffleboard.getTab("Robot");
-    pdpWidget = sbRobotTab.getLayout("PDP", BuiltInLayouts.kGrid).withSize(3, 6);
-    ShuffleboardLayout rcWidget =
-        sbRobotTab.getLayout("RobotController", BuiltInLayouts.kGrid).withSize(3, 3);
-
-    /* sbRobotTab */
-    rcWidget
-        .addNumber("Batt Volt", RobotController::getBatteryVoltage)
-        .withWidget(BuiltInWidgets.kVoltageView)
-        .withProperties(Map.of("min", 0, "max", 13));
-    rcWidget
-        .addBoolean("Brown Out", RobotController::isBrownedOut)
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withProperties(Map.of("Color when true", "Red", "Color when false", "Green"));
-    rcWidget
-        .addBoolean("Ever Browned Out", this::getEverBrownOut)
-        .withWidget(BuiltInWidgets.kBooleanBox)
-        .withProperties(Map.of("Color when true", "Red", "Color when false", "Green"));
-
-    prevDsConnectState = DriverStation.isDSAttached();
-
     DataLogManager.log(String.format("Brownout Voltage: %f", RobotController.getBrownoutVoltage()));
-
-    // Set the scheduler to log Shuffleboard events for command initialize,
-    // interrupt, finish
-
-    StringLogEntry commandLog = new StringLogEntry(log, "/command/event");
-    CommandScheduler.getInstance()
-        .onCommandInitialize(
-            command -> commandLog.append("Command initialized:" + command.getName()));
-
-    if (Constants.COMMAND_EXECUTE_LOG) {
-      CommandScheduler.getInstance()
-          .onCommandExecute(command -> commandLog.append("Command execute:" + command.getName()));
-    }
-
-    CommandScheduler.getInstance()
-        .onCommandInterrupt(
-            command -> commandLog.append("Command interrupted:" + command.getName()));
-    CommandScheduler.getInstance()
-        .onCommandFinish(command -> commandLog.append("Command finished:" + command.getName()));
-    commandLog.append("Opened command log");
-
     loopTime = new DoubleLogEntry(log, "/robot/LoopTime");
   }
 
@@ -120,13 +59,9 @@ public class DataLogging {
       everBrownout = true;
     }
 
-    boolean newDsConnectState = DriverStation.isDSAttached();
-    if (prevDsConnectState != newDsConnectState) {
-      Shuffleboard.addEventMarker(
-          "Driver Station is %s" + (newDsConnectState ? "Connected" : "Disconnected"),
-          EventImportance.kHigh);
-      prevDsConnectState = newDsConnectState;
-    }
+    SmartDashboard.putNumber("Batt Volt", RobotController.getBatteryVoltage());
+    SmartDashboard.putBoolean("Brown Out", RobotController.isBrownedOut());
+    SmartDashboard.putBoolean("Ever Browned Out", getEverBrownOut());
 
     if (Constants.LOOP_TIMING_LOG) {
       loopTime.append(Timer.getFPGATimestamp() - startTime);
@@ -143,16 +78,10 @@ public class DataLogging {
     PowerDistribution pdp = robotContainer.getPdp();
 
     // Add hardware sendables here
-    pdpWidget.add("PDP", pdp).withWidget(BuiltInWidgets.kPowerDistribution);
+    SmartDashboard.putData("PDP", pdp);
 
     // Log configuration info here
     DataLogManager.log(String.format("PDP Can ID: %d", pdp.getModule()));
-
-    // Add values with supplier functions here.
-    pdpWidget
-        .addNumber("PDP Temp", pdp::getTemperature)
-        .withWidget(BuiltInWidgets.kDial)
-        .withProperties(Map.of("min", 15, "max", 50));
   }
 
   public void startLoopTime() {

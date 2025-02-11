@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.MotorConstants;
@@ -71,6 +72,15 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
     this.encoder = motorHardware.encoder;
 
     initializeMotor();
+
+    // Add buttons for the dashboard
+    SmartDashboard.putData(
+        "Brake Mode",
+        new InstantCommand(() -> setBrakeMode(true)).ignoringDisable(true).withName("Brake Mode"));
+
+    SmartDashboard.putData(
+        "Coast Mode",
+        new InstantCommand(() -> setBrakeMode(false)).ignoringDisable(true).withName("Coast Mode"));
   }
 
   private void initializeMotor() {
@@ -109,11 +119,14 @@ public class MotorSubsystem extends SubsystemBase implements AutoCloseable {
   @Override
   public void periodic() {
 
+    SmartDashboard.putNumber("motor Voltage", getVoltageCommand());
+    SmartDashboard.putNumber("motor Speed", getSpeed());
+    SmartDashboard.putNumber("motor Position", encoder.getPosition());
+    SmartDashboard.putNumber("motor Current", getCurrent());
     SmartDashboard.putBoolean("motor Enabled", motorEnabled);
     SmartDashboard.putNumber("motor Setpoint", motorController.getSetpoint());
     SmartDashboard.putNumber("motor Feedforward", newFeedforward);
     SmartDashboard.putNumber("motor PID output", pidOutput);
-    SmartDashboard.putNumber("motor Position", encoder.getPosition());
   }
 
   /**
